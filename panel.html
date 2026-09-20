@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Life - Panel de Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .panel-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .user-info h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .user-info p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .user-info strong {
+            color: #333;
+        }
+
+        .content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .content h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .content p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: grid;
+            gap: 16px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #333;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .panel-container {
+                padding: 0;
+            }
+
+            .header, .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="panel-container">
+        <div class="header">
+            <h1>🏥 QR Life</h1>
+            <p>Panel de Control - STAGING</p>
+
+            <div class="user-info" id="userInfo" style="display: none;">
+                <h2>Información de Sesión</h2>
+                <p><strong>Usuario:</strong> <span id="infoUsuario">-</span></p>
+                <p><strong>Empresa:</strong> <span id="infoEmpresa">-</span></p>
+                <p><strong>Email:</strong> <span id="infoEmail">-</span></p>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- ESTADO: CARGANDO -->
+            <div id="loadingState" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Verificando sesión...</p>
+            </div>
+
+            <!-- ESTADO: ERROR -->
+            <div id="errorState" class="error" style="display: none;">
+                <p id="errorMessage">Error al verificar la sesión</p>
+                <button class="btn btn-primary" onclick="volverAlLogin()" style="margin-top: 16px;">
+                    Volver al Login
+                </button>
+            </div>
+
+            <!-- ESTADO: PANEL -->
+            <div id="panelState" style="display: none;">
+                <h2>Panel de Control</h2>
+                <p>Tu sesión ha sido verificada correctamente.<br>¿Qué deseas hacer?</p>
+
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="verFichaMedica()">
+                        📋 Ver Ficha Médica
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="actualizarFicha()">
+                        ✏️ Actualizar Ficha Médica
+                    </button>
+
+                    <button class="btn btn-danger" onclick="cerrarSesion()">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>QR Life STAGING &copy; 2026</p>
+            <p><small>Ambiente de pruebas - No usar en producción</small></p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN STAGING
+        // ============================================
+        const CONFIG = {
+            WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbykn6O1v5iGO49MFkN7bhLUeO-dPztTx-VWKP2Oo4z5GXi5wsUtpnm7I8-7RL44Mb8x/exec',
+            FRONTEND_BASE_URL: 'https://contacto703.github.io/qr-life-formulario-staging',
+            LOGIN_URL: 'https://contacto703.github.io/qr-life-formulario-staging/login.html'
+        };
+
+        // ============================================
+        // ELEMENTOS DOM
+        // ============================================
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const panelState = document.getElementById('panelState');
+        const errorMessage = document.getElementById('errorMessage');
+        const userInfo = document.getElementById('userInfo');
+
+        // ============================================
+        // FUNCIÓN: VERIFICAR SESIÓN
+        // ============================================
+        async function verificarSesion() {
+            try {
+                const token = sessionStorage.getItem('qrlife_session_token');
+
+                if (!token) {
+                    console.log('❌ No hay token en sessionStorage');
+                    throw new Error('No hay sesión activa');
+                }
+
+                console.log('🔍 Verificando token con el backend...');
+
+                const response = await fetch(`${CONFIG.WEB_APP_URL}?action=obtener_datos_usuario&token=${encodeURIComponent(token)}`);
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+
+                if (contentType && contentType.includes('application/json')) {
+                    const resultado = await response.json();
+                    console.log('📥 Respuesta del servidor:', resultado);
+
+                    if (resultado.success) {
+                        console.log('✅ Sesión válida');
+                        mostrarPanel(resultado.data || resultado);
+                        return true;
+                    } else {
+                        throw new Error(resultado.error || 'Sesión inválida');
+                    }
+                } else {
+                    // Respuesta HTML (posiblemente redirección)
+                    console.log('⚠️ Respuesta HTML recibida, sesión probablemente expirada');
+                    throw new Error('Sesión expirada o inválida');
+                }
+
+            } catch (error) {
+                console.error('❌ Error al verificar sesión:', error);
+                mostrarError(error.message);
+                return false;
+            }
+        }
+
+        // ============================================
+        // FUNCIÓN: MOSTRAR PANEL
+        // ============================================
+        function mostrarPanel(datos) {
+            console.log('✅ Mostrando panel con datos:', datos);
+
+            // Ocultar loading
+            loadingState.style.display = 'none';
+            errorState.style.display = 'none';
+
+            // Mostrar información del usuario
+            if (datos) {
+                document.getElementById('infoUsuario').textContent = datos.usuario || sessionStorage.getItem('qrlife_usuario') || '-';
+                document.getElementById('infoEmail').textContent = datos.email || '-';
+                document.getElementById('infoEmpresa').textContent = datos.empresa || sessionStorage.getItem('qrlife_empresa') || '-';
+                userInfo.style.display = 'block';
+            }
+
+            // Mostrar panel
+            panelState.style.display = 'block';
+        }
+
+        // ============================================
+        // FUNCIÓN: MOSTRAR ERROR
+        // ============================================
+        function mostrarError(mensaje) {
+            console.error('❌ Mostrando error:', mensaje);
+
+            loadingState.style.display = 'none';
+            panelState.style.display = 'none';
+
+            errorMessage.textContent = mensaje;
+            errorState.style.display = 'block';
+        }
+
+        // ============================================
+        // FUNCIÓN: VER FICHA MÉDICA
+        // ============================================
+        function verFichaMedica() {
+            const token = sessionStorage.getItem('qrlife_session_token');
+            if (!token) {
+                alert('Sesión expirada');
+                volverAlLogin();
+                return;
+            }
+
+            console.log('📋 Abriendo ficha médica...');
+            // Abrir en nueva ventana para mantener sesión en panel
+            window.open(`${CONFIG.WEB_APP_URL}?action=ver_ficha&token=${encodeURIComponent(token)}`, '_blank');
+        }
+
+        // ============================================
+        // FUNCIÓN: ACTUALIZAR FICHA
+        // ============================================
+        function actualizarFicha() {
+            const token = sessionStorage.getItem('qrlife_session_token');
+            if (!token) {
+                alert('Sesión expirada');
+                volverAlLogin();
+                return;
+            }
+
+            console.log('✏️ Abriendo formulario de actualización...');
+            // Abrir formulario en nueva ventana
+            window.open(`${CONFIG.WEB_APP_URL}?action=formulario&token=${encodeURIComponent(token)}`, '_blank');
+        }
+
+        // ============================================
+        // FUNCIÓN: CERRAR SESIÓN
+        // ============================================
+        function cerrarSesion() {
+            console.log('🚪 Cerrando sesión...');
+
+            if (confirm('¿Está seguro que desea cerrar sesión?')) {
+                // Limpiar sessionStorage
+                sessionStorage.removeItem('qrlife_session_token');
+                sessionStorage.removeItem('qrlife_usuario');
+                sessionStorage.removeItem('qrlife_empresa');
+
+                console.log('✅ Sesión cerrada');
+
+                // Redirigir al login
+                volverAlLogin();
+            }
+        }
+
+        // ============================================
+        // FUNCIÓN: VOLVER AL LOGIN
+        // ============================================
+        function volverAlLogin() {
+            window.location.href = CONFIG.LOGIN_URL;
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🏥 QR Life Panel STAGING inicializado');
+            console.log('📍 Web App URL:', CONFIG.WEB_APP_URL);
+
+            // Verificar sesión automáticamente
+            verificarSesion();
+        });
+
+        // ============================================
+        // MANEJAR VISIBILIDAD DE PÁGINA
+        // ============================================
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Re-verificar sesión cuando el usuario vuelve a la pestaña
+                console.log('👁️ Página visible de nuevo, re-verificando sesión...');
+                const token = sessionStorage.getItem('qrlife_session_token');
+                if (token && panelState.style.display === 'block') {
+                    // Solo re-verificar si ya estamos en el panel
+                    verificarSesion();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
