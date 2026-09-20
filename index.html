@@ -549,7 +549,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMA_vtqAmTE-D-7teatOvzn9gPMuBNYisTjFTpDKNfqHjJyafokAguRTtnFlYKwPtV/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbykn6O1v5iGO49MFkN7bhLUeO-dPztTx-VWKP2Oo4z5GXi5wsUtpnm7I8-7RL44Mb8x/exec';
 
         let empresaValidada = '';
         let tokenValidado = '';
@@ -659,8 +659,10 @@
             if (tokenGuardado && empresaGuardada) {
                 empresaValidada = empresaGuardada;
                 tokenValidado = tokenGuardado;
-                precargarDatosUsuario(tokenGuardado); 
+                precargarDatosUsuario(tokenGuardado);
                 mostrarFormulario();
+            } else {
+                tokenScreen.style.display = 'block';
             }
         });
 
