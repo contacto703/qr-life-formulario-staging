@@ -246,16 +246,18 @@
             try {
                 console.log('🔐 Intentando login para:', usuario);
 
+                // Crear URLSearchParams para application/x-www-form-urlencoded
+                const params = new URLSearchParams();
+                params.append('action', 'login');
+                params.append('usuario', usuario);
+                params.append('password', password);
+
                 const response = await fetch(CONFIG.WEB_APP_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: JSON.stringify({
-                        action: 'login',
-                        usuario: usuario,
-                        password: password
-                    })
+                    body: params.toString()
                 });
 
                 if (!response.ok) {
