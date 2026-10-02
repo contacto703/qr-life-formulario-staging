@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Monitoreo - QR Life</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --bg-main: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --bg-hover: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333333;
+            --success: #4CAF50;
+            --danger: #FF1744;
+            --warning: #FFB300;
+            --info: #2196F3;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        body.auth-ok { opacity: 1; }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            padding: 30px 40px;
+            border-bottom: 3px solid var(--primary);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-title { display: flex; align-items: center; gap: 20px; }
+        .header-logo { height: 60px; filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.3)); }
+        .header-title h1 { font-size: 32px; font-weight: 700; }
+        .header-subtitle { font-size: 14px; color: var(--text-secondary); margin-top: 5px; }
+        .last-update { color: var(--primary); font-size: 13px; font-weight: 500; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 40px; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2); }
+        .card-header { padding: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .card-value { font-size: 48px; font-weight: 700; padding: 20px; text-align: center; }
+        .card-value.orange { color: var(--primary); }
+        .card-value.blue { color: #2196F3; }
+        .card-value.green { color: var(--success); }
+        .card-footer { display: flex; justify-content: space-around; padding: 15px; background: rgba(255,255,255,0.02); }
+        .stat-label { display: block; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+        .stat-value { display: block; font-size: 18px; font-weight: 600; }
+
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .chart-container { padding: 30px; height: 300px; position: relative; }
+        
+        .section-card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 30px; margin-bottom: 30px; }
+        .section-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; }
+        .form-textarea { height: 120px; resize: vertical; }
+        
+        .btn { padding: 12px 30px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; transition: 0.3s; }
+		/* Generador de Tokens Simple */
+.token-box {
+    background: var(--bg-main);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 25px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.token-display {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+    margin: 20px 0;
+    min-height: 50px;
+}
+
+.token-placeholder {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.token-buttons {
+    display: flex;
+    gap: 15px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.btn-generate {
+    flex: 1;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.btn-copy {
+    flex: 1;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+        .btn:hover { filter: brightness(1.2); box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .table-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 30px; }
+        .table-header { padding: 20px 30px; border-bottom: 1px solid var(--border); }
+        .table-title { font-size: 18px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 15px 20px; text-align: left; font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+        td { padding: 18px 20px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+        tbody tr:hover { background: var(--bg-hover); }
+        
+        .status-badge { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .status-badge.activo { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+        .status-badge.bloqueado { background: rgba(255, 23, 68, 0.15); color: var(--danger); }
+        
+        .txt-warning { color: var(--warning); }
+        .txt-info { color: var(--info); }
+        .txt-danger { color: var(--danger); }
+        
+        .logout-link { color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; }
+        
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .result-item { padding: 12px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .result-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .result-value { font-size: 15px; font-weight: 500; color: #fff; }
+
+        .notification-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .preview-box { background: #f3f4f6; color: #333; border-radius: 8px; padding: 20px; height: 100%; min-height: 300px; border: 1px solid #ddd; overflow-y: auto; }
+        .preview-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-title">
+                <img src="https://i.imgur.com/FJ4ws55.png" alt="QR Life Logo" class="header-logo">
+                <div>
+                    <h1>Sistema de Monitoreo - STAGING</h1>
+                    <p class="header-subtitle">Control de Facturación Firebase</p>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="last-update" id="lastUpdate">Actualizando...</div>
+                <div style="margin-top: 10px;">
+                    <span style="color: var(--text-secondary); margin-right: 10px;" id="usuarioActual"></span>
+                    <a href="#" class="logout-link" onclick="cerrarSesion(); return false;">Cerrar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="metrics-grid">
+            <div class="card">
+                <div class="card-header"><span class="card-title">Servicios Activos</span><div class="card-icon orange">👥</div></div>
+                <div class="card-value orange" id="valActivos">-</div>
+                <div class="card-footer">
+                    <div class="stat"><span class="stat-label">Bloqueados</span><span class="stat-value" id="valBloqueados">-</span></div>
+                    <div class="stat"><span class="stat-label">Total DB</span><span class="stat-value" id="valTotalEmp">-</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Empresas</span><div class="card-icon blue">🏢</div></div>
+                <div class="card-value blue" id="valEmpActivas">-</div>
+                <div class="card-footer">
+                    <div class="stat"><span class="stat-label">Inactivas</span><span class="stat-value" id="valEmpInactivas">-</span></div>
+                    <div class="stat"><span class="stat-label">Total</span><span class="stat-value" id="valEmpTotal">-</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Total Facturación</span><div class="card-icon green">💰</div></div>
+                <div class="card-value green" id="valFacturacion">-</div>
+                <div class="card-footer">
+                    <div class="stat"><span class="stat-label">Ext. Perdidas</span><span class="stat-value" id="valExtraPerdidas">-</span></div>
+                    <div class="stat"><span class="stat-label">Ext. Manuales</span><span class="stat-value" id="valExtraManuales">-</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Estado Sistema</span><div class="card-icon green">⚡</div></div>
+                <div class="card-value green">OPERATIVO</div>
+                <div class="card-footer">
+                    <div class="stat"><span class="stat-label">Fuente</span><span class="stat-value">FIREBASE</span></div>
+                    <div class="stat"><span class="stat-label">Sincro</span><span class="stat-value">OK</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-header"><span class="card-title">Distribución Empleados</span></div>
+                <div class="chart-container"><canvas id="empleadosChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Estado Empresas</span></div>
+                <div class="chart-container"><canvas id="empresasChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">⚙️ Tarifario (USD)</div>
+            <form class="config-form" onsubmit="guardarTarifario(event)" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div>
+                    <label class="form-label">💰 Servicio Base (Mensual)</label>
+                    <input type="number" id="precioMensual" class="form-input" step="0.01" min="0">
+                </div>
+                <div>
+                    <label class="form-label">🔄 Reposición Tarjeta</label>
+                    <input type="number" id="precioPerdida" class="form-input" step="0.01" min="0">
+                </div>
+                <div>
+                    <label class="form-label">✍️ Emisión Manual</label>
+                    <input type="number" id="precioManual" class="form-input" step="0.01" min="0">
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn" style="width: 100%;">💾 Guardar Tarifario</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">🔍 Buscar Empleado por DNI</div>
+            <form onsubmit="buscarEmpleado(event)" style="display: flex; gap: 15px; align-items: end;">
+                <div style="flex: 1;">
+                    <label class="form-label">DNI del Empleado</label>
+                    <input type="text" id="dniInput" class="form-input" placeholder="Ej: 12345678" required>
+                </div>
+                <button type="submit" class="btn">🔍 Buscar</button>
+            </form>
+            <div id="resultadoBusqueda" style="display: none; margin-top: 25px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border);"></div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header"><h2 class="table-title">📊 Detalle de Facturación por Empresa</h2></div>
+            <table>
+                <thead>
+                    <tr><th>EMPRESA</th><th>ESTADO</th><th>EMPLEADOS ACTIVOS</th><th>REPOSICIONES</th><th>MANUALES</th><th>TOTAL COBRO</th></tr>
+                </thead>
+                <tbody id="tablaEmpresas"></tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header"><h2 class="table-title">🚫 Empleados Bloqueados por Empresa</h2></div>
+            <table>
+                <thead>
+                    <tr><th>EMPRESA</th><th>BLOQUEADOS</th><th>TOTAL</th><th>% BLOQ.</th><th>DNI BLOQUEADOS</th></tr>
+                </thead>
+                <tbody id="tablaBloqueados"></tbody>
+            </table>
+        </div>
+
+
+        <!-- Reportes de Cumplimiento Legal (AAIP) -->
+        <div class="section-card">
+            <div class="section-title">📋 Reportes de Cumplimiento Legal (AAIP)</div>
+            
+            <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                    ℹ️ <strong>Información:</strong> Genera reportes para cumplir con solicitudes de titulares de datos o auditorías de la AAIP según Ley 25.326.
+                </p>
+            </div>
+
+            <form onsubmit="buscarEmpleadoLegal(event)" style="display: flex; gap: 15px; align-items: end; margin-bottom: 25px;">
+                <div style="flex: 1;">
+                    <label class="form-label">DNI del Empleado</label>
+                    <input type="text" id="dniLegal" class="form-input" placeholder="Ej: 12345678" required>
+                </div>
+                <button type="submit" class="btn">🔍 Buscar Empleado</button>
+            </form>
+
+            <div id="resultadoLegal" style="display: none;">
+                <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 10px;">
+                        <span id="nombreEmpleadoLegal"></span>
+                    </h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        DNI: <strong id="dniEmpleadoLegal"></strong> | 
+                        Empresa: <strong id="empresaEmpleadoLegal"></strong>
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Reporte 1: Datos Personales Completos -->
+                    <button onclick="generarReporteDatosCompletos()" id="btnDatosCompletos" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                        <span style="font-size: 32px;">📄</span>
+                        <span style="font-size: 14px; font-weight: 600;">Datos Personales Completos</span>
+                        <span style="font-size: 11px; opacity: 0.9;">Excel con toda la información del empleado</span>
+                    </button>
+
+                    <!-- Reporte 2: Historial de Accesos -->
+                    <button onclick="generarReporteAccesosLegal()" id="btnAccesosLegal" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);">
+                        <span style="font-size: 32px;">📊</span>
+                        <span style="font-size: 14px; font-weight: 600;">Historial de Accesos</span>
+                        <span style="font-size: 11px; opacity: 0.9;">Registro completo de accesos al QR</span>
+                    </button>
+
+                    <!-- Reporte 3: Modificaciones -->
+                    <button id="btnModificaciones" onclick="generarReporteModificaciones()" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <span style="font-size: 32px;">✏️</span>
+                        <span style="font-size: 14px; font-weight: 600;">Historial de Modificaciones</span>
+                    </button>
+
+                    <!-- Reporte 4: Aceptación de Consentimiento -->
+<button id="btnConsentimientos" onclick="generarReporteConsentimientos()" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
+    <span style="font-size: 32px;">📋</span>
+    <span style="font-size: 14px; font-weight: 600;">Aceptación de Consentimiento</span>
+    <span style="font-size: 11px; opacity: 0.9;">Registro de consentimientos AAIP</span>
+</button>
+
+                    <!-- Reporte 5: Exportar Todo -->
+                    <button id="btnExportarTodo" onclick="generarExportacionCompleta()" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <span style="font-size: 32px;">📦</span>
+                        <span style="font-size: 14px; font-weight: 600;">Exportar Todo (Portabilidad)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+		
+		<!-- Exportación Masiva por Empresa (AAIP) -->
+        <div class="section-card">
+            <div class="section-title">📦 Exportación Masiva por Empresa</div>
+            
+            <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                    ℹ️ <strong>Exportación Completa:</strong> Genera todos los reportes AAIP de una empresa completa. 
+                    Los archivos se empaquetan en un ZIP. Para empresas grandes (1000+ empleados) puede tardar varios minutos.
+                </p>
+            </div>
+
+            <form onsubmit="generarExportacionMasiva(event)" style="max-width: 600px;">
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Seleccionar Empresa</label>
+                    <select id="empresaExportacion" class="form-input" required>
+                        <option value="">Cargando empresas...</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Reportes a Incluir</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="chkDatosPersonales" checked>
+                            <span>📄 Datos Personales de todos los empleados</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="chkAccesos" checked>
+                            <span>📊 Historial de Accesos</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="chkModificaciones" checked>
+                            <span>✏️ Historial de Modificaciones</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="chkEliminaciones" checked>
+                            <span>🗑️ Registro de Eliminaciones</span>
+                        </label>
+						<label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="chkConsentimientos" checked>
+                            <span>📋 Aceptación de Consentimientos</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="btnExportarMasivo" style="width: 100%;">
+                    📦 Generar Exportación Completa
+                </button>
+
+                <div id="progresoExportacion" style="display: none; margin-top: 20px; padding: 20px; background: rgba(255, 107, 53, 0.05); border-radius: 8px; border: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <div style="width: 20px; height: 20px; border: 2px solid var(--primary); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <span style="font-weight: 600;">Generando exportación...</span>
+                    </div>
+                    <div id="estadoExportacion" style="font-size: 13px; color: var(--text-secondary);"></div>
+                </div>
+            </form>
+        </div>
+		
+		<!-- Generador de Tokens -->
+        <div class="section-card">
+            <div class="section-title">🔑 Generador de Tokens</div>
+            <div class="token-box">
+                <div id="tokenDisplay" class="token-placeholder">
+                    Presiona el botón para generar
+                </div>
+                <div class="token-buttons">
+                    <button onclick="generarTokenSimple()" class="btn btn-generate">
+                        🎲 Generar Token
+                    </button>
+                    <button onclick="copiarTokenSimple()" id="btnCopiar" class="btn btn-copy" disabled>
+                        📋 Copiar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card" id="notificacionesSection">
+            <div class="section-title">📧 Notificaciones Masivas</div>
+            <div class="notification-grid">
+                <div class="notif-form">
+                    <div class="form-group">
+    <label class="form-label">Seleccionar Empresa</label>
+    <select id="notifEmpresa" class="form-select">
+        <option value="">Seleccione una empresa...</option>
+        <option value="TODAS" style="font-weight: bold; background: #fff3cd;">🌐 TODAS LAS EMPRESAS (Envío masivo global)</option>
+    </select>
+</div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Notificación</label>
+                        <select id="notifTipo" class="form-select" onchange="cargarPlantilla()">
+                            <option value="suspension">⚠️ Aviso de Suspensión (72 horas)</option>
+                            <option value="reactivacion">✅ Reactivación del Servicio</option>
+                            <option value="general">📢 Aviso General (Personalizado)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Asunto del Email</label>
+                        <input type="text" id="notifAsunto" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mensaje (HTML permitido)</label>
+                        <textarea id="notifMensaje" class="form-textarea" oninput="actualizarVistaPrevia()"></textarea>
+                    </div>
+                    <button onclick="enviarNotificacion()" id="btnEnviarNotif" class="btn" style="width: 100%;">🚀 Enviar Notificación</button>
+                </div>
+                <div>
+                    <span class="preview-label">VISTA PREVIA DEL CONTENIDO:</span>
+                    <div id="notifPreview" class="preview-box"></div>
+                </div>
+            </div>
+        </div>
+
+		<!-- Administración de Empleados -->
+        <div class="section-card">
+            <div class="section-title">👥 Administración de Empleados</div>
+            
+            <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                    ℹ️ <strong>Información:</strong> Gestiona el estado de acceso de los empleados. Todos los cambios quedan registrados automáticamente.
+                </p>
+            </div>
+
+            <form onsubmit="buscarEmpleadoAdmin(event)" style="display: flex; gap: 15px; align-items: end; margin-bottom: 25px;">
+                <div style="flex: 1;">
+                    <label class="form-label">DNI del Empleado</label>
+                    <input type="text" id="dniAdmin" class="form-input" placeholder="Ej: 12345678" required>
+                </div>
+                <button type="submit" class="btn">🔍 Buscar</button>
+            </form>
+
+            <div id="resultadoAdmin" style="display: none;">
+                <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 10px;">
+                        <span id="nombreEmpleadoAdmin"></span>
+                    </h3>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        DNI: <strong id="dniEmpleadoAdmin"></strong> | 
+                        Empresa: <strong id="empresaEmpleadoAdmin"></strong> | 
+                        Estado: <strong id="estadoEmpleadoAdmin"></strong>
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Bloquear Acceso -->
+                    <button onclick="bloquearEmpleado()" id="btnBloquearEmpleado" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);">
+                        <span style="font-size: 32px;">🔒</span>
+                        <span style="font-size: 14px; font-weight: 600;">Bloquear Acceso</span>
+                        <span style="font-size: 11px; opacity: 0.9;">Deshabilitar acceso al QR</span>
+                    </button>
+
+                    <!-- Habilitar Acceso -->
+                    <button onclick="habilitarEmpleado()" id="btnHabilitarEmpleado" class="btn" style="width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                        <span style="font-size: 32px;">✅</span>
+                        <span style="font-size: 14px; font-weight: 600;">Habilitar Acceso</span>
+                        <span style="font-size: 11px; opacity: 0.9;">Activar acceso al QR</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+		<!-- Administración de Empresas -->
+        <div class="section-card">
+            <div class="section-title">🏢 Administración de Empresas</div>
+            
+            <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                    ℹ️ <strong>Información:</strong> Gestiona el estado de las empresas. Al deshabilitar una empresa, todos sus empleados perderán acceso.
+                </p>
+            </div>
+
+            <button onclick="cargarListaEmpresas()" class="btn" style="margin-bottom: 20px;">🔄 Cargar Lista de Empresas</button>
+
+            <div id="listaEmpresas" style="display: none;">
+                <div style="max-height: 600px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                    <table style="width: 100%;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 1;">
+                            <tr style="border-bottom: 2px solid var(--border);">
+                                <th style="padding: 15px; text-align: left; font-weight: 600;">EMPRESA</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600;">ESTADO</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600;">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyEmpresas"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+		
+		<!-- Registro de Eliminaciones (Tabla Visual) -->
+<div class="section-card">
+    <div class="section-title">🗑️ Registro de Eliminaciones</div>
+    
+    <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid var(--primary); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+            ℹ️ <strong>Información:</strong> Registro completo de empleados eliminados del sistema (desde el botón "Eliminar Empleado" del monitoreo y desde la función "Blanquear" del Sheet).
+        </p>
+    </div>
+
+    <button onclick="cargarRegistroEliminaciones()" class="btn" style="margin-bottom: 20px;">🔄 Cargar Registro de Eliminaciones</button>
+
+    <div id="tablaEliminaciones" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="color: var(--text-secondary); font-size: 14px;">
+                Total eliminaciones: <strong id="totalEliminaciones" style="color: var(--primary);">0</strong>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 12px;">
+                Fecha generación: <span id="fechaEliminaciones"></span>
+            </div>
+        </div>
+        
+        <div style="max-height: 600px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+            <table style="width: 100%;">
+                <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 1;">
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">FECHA</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">DNI</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">NOMBRE</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">EMPRESA</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">MOTIVO</th>
+                        <th style="padding: 15px; text-align: left; font-weight: 600;">ELIMINADO POR</th>
+                        <th style="padding: 15px; text-align: center; font-weight: 600;">MÉTODO</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyEliminaciones"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+		
+    </div>
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw7cdJ_nDIwHUUipUmWbShiArv1m5bUBIyRFpuuNQQXAetq3O76d1rebuPN0E6GXKB1/exec';
+        let plantillas = {};
+        let lastDataReceived = null;
+
+        /**
+         * ============================================
+         * 🔐 HELPER DE AUTENTICACIÓN - FASE 2
+         * ============================================
+         *
+         * Agrega sessionId a las llamadas API si existe
+         * Mantiene compatibilidad con token Base64 actual
+         *
+         * IMPORTANTE: Backend todavía NO valida sessionId
+         * Este código prepara el frontend para FASE 3
+         */
+
+        /**
+         * Realiza fetch con sessionId si está disponible
+         * @param {string} url - URL base o completa
+         * @param {Object} options - Opciones de fetch (opcional)
+         * @returns {Promise<Response>}
+         */
+        function fetchConAuth(url, options = {}) {
+            // Obtener sessionId si existe
+            const sessionId = localStorage.getItem('qrlife_monitor_sessionId');
+
+            // Si hay sessionId, agregarlo a la URL
+            if (sessionId) {
+                const separator = url.includes('?') ? '&' : '?';
+                url = `${url}${separator}sessionId=${encodeURIComponent(sessionId)}`;
+            }
+
+            return fetch(url, options);
+        }
+
+        /**
+         * Construye URL con parámetros para API Monitoreo
+         * @param {Object} params - Parámetros {api, action, ...}
+         * @returns {string} URL completa con sessionId si existe
+         */
+        function buildMonitorURL(params) {
+            const sessionId = localStorage.getItem('qrlife_monitor_sessionId');
+
+            const queryParams = new URLSearchParams(params);
+            if (sessionId) {
+                queryParams.set('sessionId', sessionId);
+            }
+
+            return `${API_URL}?${queryParams.toString()}`;
+        }
+
+        (function verifyAuth() {
+            const token = localStorage.getItem('qrlife_monitor_token');
+            const user = localStorage.getItem('qrlife_monitor_usuario');
+            if (!token || !user) { window.location.href = 'login-staging.html'; return; }
+            document.getElementById('usuarioActual').textContent = `👤 ${user}`;
+            document.body.classList.add('auth-ok');
+        })();
+
+        function cerrarSesion() { localStorage.clear(); window.location.href = 'login-staging.html'; }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarPreciosGuardados();
+            cargarDatosReales();
+            cargarPlantillas();
+            setInterval(updateTimestamp, 1000);
+            setInterval(cargarDatosReales, 300000);
+        });
+
+        function updateTimestamp() {
+            document.getElementById('lastUpdate').textContent = `Actualizado: ${new Date().toLocaleTimeString('es-AR')}`;
+        }
+
+        function cargarDatosReales() {
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'obtener_estadisticas'}))
+                .then(r => r.json())
+                .then(data => {
+                    lastDataReceived = data;
+                    actualizarInterfaz(data);
+                    actualizarSelectorEmpresas(data);
+                });
+        }
+
+        function actualizarSelectorEmpresas(data) {
+    const select = document.getElementById('notifEmpresa');
+    const currentVal = select.value;
+    
+    // Calcular total de empleados
+    let totalEmpleados = 0;
+    Object.keys(data.por_empresa).forEach(empName => {
+        totalEmpleados += data.por_empresa[empName].total || 0;
+    });
+    
+    select.innerHTML = '<option value="">Seleccione una empresa...</option>';
+    
+    // Opción TODAS
+    const optTodas = document.createElement('option');
+    optTodas.value = 'TODAS';
+    optTodas.textContent = `🌐 TODAS LAS EMPRESAS (${totalEmpleados} empleados)`;
+    optTodas.style.fontWeight = 'bold';
+    optTodas.style.background = '#fff3cd';
+    select.appendChild(optTodas);
+    
+    // Separador visual
+    const optSeparador = document.createElement('option');
+    optSeparador.disabled = true;
+    optSeparador.textContent = '──────────────────────';
+    select.appendChild(optSeparador);
+    
+    // Empresas individuales
+    Object.keys(data.por_empresa).sort().forEach(empName => {
+        const info = data.por_empresa[empName];
+        const opt = document.createElement('option');
+        opt.value = empName;
+        opt.textContent = `${empName} (${info.total} empleados)`;
+        select.appendChild(opt);
+    });
+    
+    select.value = currentVal;
+}
+
+        function calculateAge(dateString) {
+            if (!dateString) return 'No definida';
+            const today = new Date();
+            const birthDate = new Date(dateString);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            return age;
+        }
+
+        function calculateIMC(peso, altura) {
+            if (!peso || !altura) return '-';
+            const a = parseFloat(altura) / 100;
+            return (parseFloat(peso) / (a * a)).toFixed(1);
+        }
+
+        function buscarEmpleado(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dniInput').value.trim();
+            const resDiv = document.getElementById('resultadoBusqueda');
+            resDiv.innerHTML = '<div style="text-align:center">🔄 Buscando en Firebase...</div>';
+            resDiv.style.display = 'block';
+
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'buscar_empleado', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const emp = data.empleado;
+                        resDiv.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #444; padding-bottom:10px;">
+                                <h3 style="color:var(--primary)">${emp.nombreCompleto}</h3>
+                                <span class="status-badge ${data.estado === 'ACTIVO' ? 'activo' : 'bloqueado'}">${data.estado}</span>
+                            </div>
+                            <div class="result-grid">
+                                <div class="result-item"><span class="result-label">DNI</span><div class="result-value">${emp.dni}</div></div>
+                                <div class="result-item"><span class="result-label">Empresa</span><div class="result-value">${emp.empresa}</div></div>
+                                <div class="result-item"><span class="result-label">Edad</span><div class="result-value">${calculateAge(emp.fechaNacimiento)} años</div></div>
+                                <div class="result-item"><span class="result-label">Peso (kg)</span><div class="result-value">${emp.peso || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">Altura (cm)</span><div class="result-value">${emp.altura || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">IMC</span><div class="result-value">${calculateIMC(emp.peso, emp.altura)}</div></div>
+                                <div class="result-item"><span class="result-label">Tipo y Factor de Sangre</span><div class="result-value txt-danger">${emp.grupoSanguineo || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">Enfermedades</span><div class="result-value">${emp.enfermedades || 'NINGUNA'}</div></div>
+                                <div class="result-item" style="grid-column: 1 / -1;"><span class="result-label">¿Es alérgico/a?</span><div class="result-value">${emp.alergias || '-'}</div></div>
+                                <div class="result-item" style="grid-column: 1 / -1;"><span class="result-label">¿Toma medicación?</span><div class="result-value">${emp.medicacion || '-'}</div></div>
+                                <div class="result-item" style="grid-column: 1 / -1;"><span class="result-label">Condición Médica Especial</span><div class="result-value">${emp.condicionMedica || '-'}</div></div>
+                                <div class="result-item" style="grid-column: 1 / -1;"><span class="result-label">Cirugías / Implantes</span><div class="result-value">${emp.cirugias || '-'}</div></div>
+                                <div class="result-item" style="grid-column: 1 / -1;"><span class="result-label">Discapacidad</span><div class="result-value">${emp.discapacidad || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">Persona de contacto</span><div class="result-value">${emp.contactoEmergencia || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">Teléfono de contacto</span><div class="result-value">${emp.telefonoEmergencia || '-'}</div></div>
+                                <div class="result-item"><span class="result-label">Obra Social</span><div class="result-value">${emp.obraSocial || '-'}</div></div>
+                            </div>
+                        `;
+                    } else {
+                        resDiv.innerHTML = `<div class="txt-danger">❌ ${data.error}</div>`;
+                    }
+                });
+        }
+
+        function cargarPlantillas() {
+            fetchConAuth(buildMonitorURL({action: 'obtenerPlantillas'}))
+                .then(r => r.json())
+                .then(data => { plantillas = data; cargarPlantilla(); });
+        }
+
+        function cargarPlantilla() {
+            const tipo = document.getElementById('notifTipo').value;
+            if (plantillas[tipo]) {
+                document.getElementById('notifAsunto').value = plantillas[tipo].asunto;
+                document.getElementById('notifMensaje').value = plantillas[tipo].mensaje;
+                actualizarVistaPrevia();
+            }
+        }
+
+        function actualizarVistaPrevia() {
+            let msg = document.getElementById('notifMensaje').value;
+            if (msg) {
+                // Elimina "San Juan 749" con o sin coma y espacios
+                msg = msg.replace(/San Juan 749,?\s*/gi, "");
+            }
+            document.getElementById('notifPreview').innerHTML = msg || '<p style="color:#999">Escriba un mensaje...</p>';
+        }
+
+        function enviarNotificacion() {
+    const emp = document.getElementById('notifEmpresa').value;
+    
+    if (!emp) {
+        return alert('Seleccione una empresa o TODAS LAS EMPRESAS');
+    }
+    
+    // Confirmación especial para TODAS
+    if (emp === 'TODAS') {
+        const confirmar = confirm(
+            '⚠️ ATENCIÓN - ENVÍO MASIVO GLOBAL ⚠️\n\n' +
+            'Estás por enviar esta notificación a TODOS los empleados del sistema.\n\n' +
+            'Esto puede tomar varios minutos y NO se puede deshacer.\n\n' +
+            '¿Estás COMPLETAMENTE SEGURO?'
+        );
+        
+        if (!confirmar) {
+            return;
+        }
+    } else {
+        // Confirmación normal para una empresa
+        if (!confirm(`¿Enviar esta notificación a todos los empleados de ${emp}?`)) {
+            return;
+        }
+    }
+    
+    const btn = document.getElementById('btnEnviarNotif');
+    btn.disabled = true;
+    btn.textContent = emp === 'TODAS' ? '⏳ Enviando a TODOS...' : '⏳ Enviando...';
+    
+    const sessionId = localStorage.getItem('qrlife_monitor_sessionId');
+    const bodyParams = new URLSearchParams({
+        action: 'enviarNotificacion',
+        empresa: emp,
+        asunto: document.getElementById('notifAsunto').value,
+        mensaje: document.getElementById('notifMensaje').value
+    });
+    if (sessionId) {
+        bodyParams.set('sessionId', sessionId);
+    }
+
+    fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: bodyParams
+    }).then(() => {
+        alert(emp === 'TODAS' ? 
+            '✅ Envío masivo procesado. Se enviará a TODOS los empleados del sistema.' : 
+            '✅ Envío procesado.'
+        );
+        btn.disabled = false;
+        btn.textContent = '🚀 Enviar Notificación';
+    }).catch(err => {
+        alert('❌ Error al enviar: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '🚀 Enviar Notificación';
+    });
+}
+
+        function cargarPreciosGuardados() {
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'obtener_precios'}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('precioMensual').value = data.precios.precio_mensual;
+                        document.getElementById('precioPerdida').value = data.precios.precio_perdida;
+                        document.getElementById('precioManual').value = data.precios.precio_manual;
+                        if (lastDataReceived) actualizarInterfaz(lastDataReceived);
+                    }
+                });
+        }
+
+        function guardarTarifario(e) {
+            e.preventDefault();
+            const pM = parseFloat(document.getElementById('precioMensual').value);
+            const pP = parseFloat(document.getElementById('precioPerdida').value);
+            const pMa = parseFloat(document.getElementById('precioManual').value);
+
+            // Recalcular interfaz localmente primero
+            if (lastDataReceived) actualizarInterfaz(lastDataReceived);
+
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'guardar_precios', precio_mensual: pM, precio_perdida: pP, precio_manual: pMa}))
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) alert('✅ Tarifario actualizado en el servidor');
+                    else alert('❌ Error al guardar');
+                });
+        }
+
+        function actualizarInterfaz(data) {
+            if (!data || !data.por_empresa) return;
+
+            const pM = parseFloat(document.getElementById('precioMensual').value) || 0;
+            const pP = parseFloat(document.getElementById('precioPerdida').value) || 0;
+            const pMa = parseFloat(document.getElementById('precioManual').value) || 0;
+
+            let totalGeneral = 0, totalPerdidas = 0, totalManuales = 0;
+            const tbody = document.getElementById('tablaEmpresas');
+            tbody.innerHTML = '';
+
+            Object.keys(data.por_empresa).sort().forEach(emp => {
+                const info = data.por_empresa[emp];
+                // Obtenemos cantidades reales de la facturación previa para recalcular
+                const factPrev = data.facturacion.por_empresa[emp] || { cant_reposiciones: 0, cant_manuales: 0 };
+                
+                // Recalcular montos con valores actuales del formulario
+                const montoMensual = info.habilitados * pM;
+                const montoReposiciones = factPrev.cant_reposiciones * pP;
+                const montoManuales = factPrev.cant_manuales * pMa;
+                const montoTotalEmpresa = montoMensual + montoReposiciones + montoManuales;
+
+                totalPerdidas += montoReposiciones;
+                totalManuales += montoManuales;
+                totalGeneral += montoTotalEmpresa;
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${emp}</strong></td>
+                    <td><span class="status-badge activo">ACTIVA</span></td>
+                    <td>${info.habilitados}</td>
+                    <td>${factPrev.cant_reposiciones}</td>
+                    <td>${factPrev.cant_manuales}</td>
+                    <td><strong>$${montoTotalEmpresa.toFixed(2)}</strong></td>
+                </tr>`;
+            });
+
+            document.getElementById('valActivos').innerText = data.acceso_habilitado;
+            document.getElementById('valBloqueados').innerText = data.acceso_bloqueado;
+            document.getElementById('valTotalEmp').innerText = data.total_empleados;
+            document.getElementById('valEmpActivas').innerText = data.empresas_activas;
+            document.getElementById('valEmpInactivas').innerText = data.empresas_inactivas;
+            document.getElementById('valEmpTotal').innerText = data.empresas_activas + data.empresas_inactivas;
+            document.getElementById('valFacturacion').innerText = `$${totalGeneral.toFixed(2)}`;
+            document.getElementById('valExtraPerdidas').innerText = `$${totalPerdidas.toFixed(2)}`;
+            document.getElementById('valExtraManuales').innerText = `$${totalManuales.toFixed(2)}`;
+
+            const tbodyB = document.getElementById('tablaBloqueados');
+            tbodyB.innerHTML = '';
+            const empKeys = Object.keys(data.por_empresa).filter(k => data.por_empresa[k].bloqueados > 0);
+            if (empKeys.length === 0) {
+                tbodyB.innerHTML = '<tr><td colspan="5" style="text-align:center">✅ Sin bloqueados</td></tr>';
+            } else {
+                empKeys.forEach(emp => {
+                    const info = data.por_empresa[emp];
+                    tbodyB.innerHTML += `<tr>
+                        <td><strong>${emp}</strong></td>
+                        <td class="txt-danger"><strong>${info.bloqueados}</strong></td>
+                        <td>${info.total}</td>
+                        <td>${((info.bloqueados / info.total) * 100).toFixed(1)}%</td>
+                        <td>${(info.dnisBloqueados || []).join(', ')}</td>
+                    </tr>`;
+                });
+            }
+            actualizarGraficos(data);
+        }
+
+        function actualizarGraficos(data) {
+            if (window.chartEmp) window.chartEmp.destroy();
+            if (window.chartComp) window.chartComp.destroy();
+            const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } };
+            window.chartEmp = new Chart(document.getElementById('empleadosChart'), {
+                type: 'doughnut',
+                data: { labels: ['Activos', 'Bloqueados'], datasets: [{ data: [data.acceso_habilitado, data.acceso_bloqueado], backgroundColor: ['#FF6B35', '#FF1744'], borderWidth: 0 }] },
+                options: opts
+            });
+            window.chartComp = new Chart(document.getElementById('empresasChart'), {
+                type: 'doughnut',
+                data: { labels: ['Activas', 'Inactivas'], datasets: [{ data: [data.empresas_activas, data.empresas_inactivas], backgroundColor: ['#4CAF50', '#9E9E9E'], borderWidth: 0 }] },
+                options: opts
+            });
+        }
+		
+		// ===== GENERADOR DE TOKENS SIMPLE =====
+        let tokenActual = null;
+
+        function generarTokenSimple() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            
+            // Parte 1: 3 letras
+            let p1 = '';
+            for (let i = 0; i < 3; i++) {
+                p1 += chars.charAt(Math.floor(Math.random() * 24));
+            }
+            
+            // Parte 2: 4 números
+            let p2 = '';
+            for (let i = 0; i < 4; i++) {
+                p2 += chars.charAt(24 + Math.floor(Math.random() * 8));
+            }
+            
+            // Parte 3: 4 alfanuméricos
+            let p3 = '';
+            for (let i = 0; i < 4; i++) {
+                p3 += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            tokenActual = `${p1}-${p2}-${p3}`;
+            
+            document.getElementById('tokenDisplay').innerHTML = `<div class="token-display">${tokenActual}</div>`;
+            document.getElementById('btnCopiar').disabled = false;
+        }
+
+        function copiarTokenSimple() {
+            if (!tokenActual) return;
+            
+            navigator.clipboard.writeText(tokenActual).then(() => {
+                const btn = document.getElementById('btnCopiar');
+                const original = btn.innerHTML;
+                btn.innerHTML = '✅ Copiado';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(() => {
+                const t = document.createElement('textarea');
+                t.value = tokenActual;
+                document.body.appendChild(t);
+                t.select();
+                document.execCommand('copy');
+                document.body.removeChild(t);
+            });
+        }
+
+        // ===== REPORTE DE ACCESOS =====
+        let datosAccesosActuales = null;
+
+        function generarReporteAccesos(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dniAccesos').value.trim();
+            if (!dni) return;
+            
+            const resultDiv = document.getElementById('resultadoAccesos');
+            const tbody = document.getElementById('tbodyAccesos');
+            
+            resultDiv.style.display = 'block';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ Cargando accesos...</td></tr>';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'obtener_accesos_empleado', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.accesos && data.accesos.length > 0) {
+                        datosAccesosActuales = data;
+                        tbody.innerHTML = '';
+                        
+                        data.accesos.forEach(acc => {
+                            tbody.innerHTML += `<tr>
+                                <td><strong>${acc.fecha}</strong></td>
+                                <td>${acc.ip || '-'}</td>
+                                <td>${acc.dispositivo || '-'}</td>
+                                <td>${acc.navegador || '-'}</td>
+                                <td>${acc.sistema || '-'}</td>
+                                <td>${acc.ubicacion || '-'}</td>
+                            </tr>`;
+                        });
+                        
+                        document.getElementById('btnDescargarExcel').style.display = 'block';
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">❌ No se encontraron accesos para este DNI</td></tr>';
+                        datosAccesosActuales = null;
+                        document.getElementById('btnDescargarExcel').style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--danger);">❌ Error de conexión</td></tr>';
+                    console.error('Error:', err);
+                });
+        }
+
+        function descargarExcelAccesos() {
+            if (!datosAccesosActuales || !datosAccesosActuales.accesos) {
+                alert('No hay datos para descargar');
+                return;
+            }
+            
+            const dni = document.getElementById('dniAccesos').value.trim();
+            const btn = document.getElementById('btnDescargarExcel');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generando Excel...';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_excel_accesos', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                        btn.disabled = false;
+                        btn.textContent = '📥 Descargar Excel';
+                    } else {
+                        alert('Error al generar Excel: ' + (data.error || 'Error desconocido'));
+                        btn.disabled = false;
+                        btn.textContent = '📥 Descargar Excel';
+                    }
+                })
+                .catch(err => {
+                    alert('Error de conexión');
+                    console.error('Error:', err);
+                    btn.disabled = false;
+                    btn.textContent = '📥 Descargar Excel';
+                });
+        }
+
+        // ============================================
+        // REPORTES DE CUMPLIMIENTO LEGAL (AAIP)
+        // ============================================
+        let empleadoLegalActual = null;
+
+        function buscarEmpleadoLegal(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dniLegal').value.trim();
+            if (!dni) return;
+            
+            const resultDiv = document.getElementById('resultadoLegal');
+            resultDiv.style.display = 'block';
+            
+            document.getElementById('nombreEmpleadoLegal').textContent = 'Buscando...';
+            document.getElementById('dniEmpleadoLegal').textContent = dni;
+            document.getElementById('empresaEmpleadoLegal').textContent = '-';
+            
+            document.getElementById('btnDatosCompletos').disabled = true;
+            document.getElementById('btnAccesosLegal').disabled = true;
+            
+            fetch(`${API_URL}?api=monitor&action=buscar_empleado&dni=${dni}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.empleado) {
+                        empleadoLegalActual = data.empleado;
+                        
+                        document.getElementById('nombreEmpleadoLegal').textContent = data.empleado.nombreCompleto || 'Sin nombre';
+                        document.getElementById('dniEmpleadoLegal').textContent = dni;
+                        document.getElementById('empresaEmpleadoLegal').textContent = data.empleado.empresa || 'Sin empresa';
+                        
+                        document.getElementById('btnDatosCompletos').disabled = false;
+                        document.getElementById('btnAccesosLegal').disabled = false;
+                    } else {
+                        document.getElementById('nombreEmpleadoLegal').textContent = '❌ Empleado no encontrado';
+                        document.getElementById('empresaEmpleadoLegal').textContent = '-';
+                        empleadoLegalActual = null;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('nombreEmpleadoLegal').textContent = '❌ Error al buscar';
+                    empleadoLegalActual = null;
+                });
+        }
+
+        function generarReporteDatosCompletos() {
+            if (!empleadoLegalActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const dni = document.getElementById('dniLegal').value.trim();
+            const btn = document.getElementById('btnDatosCompletos');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando Excel...</span>';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_datos_completos', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    } else {
+                        alert('Error al generar reporte: ' + (data.error || 'Error desconocido'));
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+
+        function generarReporteAccesosLegal() {
+            if (!empleadoLegalActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const dni = document.getElementById('dniLegal').value.trim();
+            const btn = document.getElementById('btnAccesosLegal');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando Excel...</span>';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_excel_accesos', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    } else {
+                        alert('Error al generar reporte: ' + (data.error || 'Error desconocido'));
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+
+        // ============================================
+        // FUNCIONES PARA REPORTES ADICIONALES
+        // ============================================
+        
+        function generarReporteModificaciones() {
+            if (!empleadoLegalActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const dni = document.getElementById('dniLegal').value.trim();
+            const btn = document.getElementById('btnModificaciones');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando...</span>';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_reporte_modificaciones', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                    } else {
+                        alert('Error: ' + (data.error || 'No se encontraron modificaciones'));
+                    }
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+		
+		function generarReporteConsentimientos() {
+    if (!empleadoLegalActual) {
+        alert('Primero busca un empleado');
+        return;
+    }
+    
+    const dni = document.getElementById('dniLegal').value.trim();
+    const btn = document.getElementById('btnConsentimientos');
+    const originalHTML = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando...</span>';
+    
+    fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_reporte_consentimientos', dni: dni}))
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.url) {
+                window.open(data.url, '_blank');
+            } else {
+                alert('Error: ' + (data.error || 'No se encontró consentimiento'));
+            }
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Error de conexión');
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
+}
+
+        function generarReporteEliminaciones() {
+            // Mostrar opciones
+            const opcion = confirm(
+                '¿Cómo deseas generar el reporte?\n\n' +
+                'OK = Todas las eliminaciones del sistema\n' +
+                'Cancelar = Eliminaciones de una empresa específica'
+            );
+
+            let url;
+
+            if (opcion) {
+                // Todas las eliminaciones
+                url = buildMonitorURL({api: 'monitor', action: 'generar_reporte_eliminaciones_todas'});
+            } else {
+                // Por empresa
+                const empresa = prompt('Ingresa el nombre de la empresa:');
+                if (!empresa || empresa.trim() === '') {
+                    alert('Operación cancelada');
+                    return;
+                }
+                url = buildMonitorURL({api: 'monitor', action: 'generar_reporte_eliminaciones_empresa', empresa: empresa.trim()});
+            }
+
+            const btn = document.getElementById('btnEliminaciones');
+            const originalHTML = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando...</span>';
+
+            fetchConAuth(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                    } else {
+                        alert('Error: ' + (data.error || 'No se encontraron eliminaciones'));
+                    }
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+
+        function generarExportacionCompleta() {
+            if (!empleadoLegalActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const dni = document.getElementById('dniLegal').value.trim();
+            const btn = document.getElementById('btnExportarTodo');
+            const originalHTML = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 32px;">⏳</span><span style="font-size: 14px;">Generando...</span>';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'generar_exportacion_completa', dni: dni}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.url) {
+                        window.open(data.url, '_blank');
+                    } else {
+                        alert('Error: ' + (data.error || 'Error desconocido'));
+                    }
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                });
+        }
+
+        // ============================================
+        // ADMINISTRACIÓN DE EMPLEADOS
+        // ============================================
+        
+        let empleadoAdminActual = null;
+
+        function buscarEmpleadoAdmin(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dniAdmin').value.trim();
+            if (!dni) return;
+            
+            const resultDiv = document.getElementById('resultadoAdmin');
+            resultDiv.style.display = 'block';
+            
+            document.getElementById('nombreEmpleadoAdmin').textContent = 'Buscando...';
+            
+            fetch(`${API_URL}?api=monitor&action=buscar_empleado&dni=${dni}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.empleado) {
+                        empleadoAdminActual = data.empleado;
+						
+                        
+                        document.getElementById('nombreEmpleadoAdmin').textContent = data.empleado.nombreCompleto || 'Sin nombre';
+                        document.getElementById('dniEmpleadoAdmin').textContent = dni;
+                        document.getElementById('empresaEmpleadoAdmin').textContent = data.empleado.empresa || 'Sin empresa';
+                        
+                        const accesoNormalizado = (data.empleado.acceso || 'Si').toUpperCase();
+                        const estado = accesoNormalizado === 'SI' ? '✅ ACTIVO' : '🔒 BLOQUEADO';
+                        const colorEstado = accesoNormalizado === 'Si' ? '#4CAF50' : '#DC3545';
+                        document.getElementById('estadoEmpleadoAdmin').textContent = estado;
+                        document.getElementById('estadoEmpleadoAdmin').style.color = colorEstado;
+                        
+                        // Habilitar/deshabilitar botones según estado
+                        document.getElementById('btnBloquearEmpleado').disabled = (accesoNormalizado === 'NO');
+                        document.getElementById('btnHabilitarEmpleado').disabled = (accesoNormalizado === 'SI');
+                        
+                    } else {
+                        document.getElementById('nombreEmpleadoAdmin').textContent = '❌ Empleado no encontrado';
+                        empleadoAdminActual = null;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('nombreEmpleadoAdmin').textContent = '❌ Error al buscar';
+                    empleadoAdminActual = null;
+                });
+        }
+
+        function bloquearEmpleado() {
+            if (!empleadoAdminActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const motivo = prompt('Motivo del bloqueo:\n(Ejemplo: Falta de pago, Empleado dado de baja, etc.)');
+            
+            if (!motivo) {
+                alert('Debes indicar un motivo');
+                return;
+            }
+            
+            if (!confirm(`¿Confirmas que deseas BLOQUEAR el acceso de ${empleadoAdminActual.nombreCompleto}?`)) {
+                return;
+            }
+            
+            const dni = document.getElementById('dniAdmin').value.trim();
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'cambiar_estado_empleado', dni: dni, nuevoEstado: 'No', motivo: motivo}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Empleado bloqueado correctamente\n\nEl cambio ha sido registrado en el sistema.');
+                        buscarEmpleadoAdmin(new Event('submit'));
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                });
+        }
+
+        function habilitarEmpleado() {
+            if (!empleadoAdminActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const motivo = prompt('Motivo de la habilitación:\n(Ejemplo: Pago recibido, Reincorporación laboral, etc.)');
+            
+            if (!motivo) {
+                alert('Debes indicar un motivo');
+                return;
+            }
+            
+            if (!confirm(`¿Confirmas que deseas HABILITAR el acceso de ${empleadoAdminActual.nombreCompleto}?`)) {
+                return;
+            }
+            
+            const dni = document.getElementById('dniAdmin').value.trim();
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'cambiar_estado_empleado', dni: dni, nuevoEstado: 'Si', motivo: motivo}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Empleado habilitado correctamente\n\nEl cambio ha sido registrado en el sistema.');
+                        buscarEmpleadoAdmin(new Event('submit'));
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                });
+        }
+
+        function eliminarEmpleado() {
+            if (!empleadoAdminActual) {
+                alert('Primero busca un empleado');
+                return;
+            }
+            
+            const motivo = prompt('Motivo de la eliminación:\n(Ejemplo: Baja laboral, Solicitud del titular, etc.)');
+            
+            if (!motivo) {
+                alert('Debes indicar un motivo');
+                return;
+            }
+            
+            const confirmacion1 = confirm(`⚠️ ADVERTENCIA ⚠️\n\n¿Confirmas que deseas ELIMINAR PERMANENTEMENTE a ${empleadoAdminActual.nombreCompleto}?\n\nEsta acción NO se puede deshacer.`);
+            
+            if (!confirmacion1) return;
+            
+            const confirmacion2 = confirm('Esta es tu última oportunidad.\n\n¿Estás COMPLETAMENTE SEGURO de eliminar este empleado?\n\nSe guardará un registro de la eliminación.');
+            
+            if (!confirmacion2) return;
+            
+            const dni = document.getElementById('dniAdmin').value.trim();
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'eliminar_empleado', dni: dni, motivo: motivo}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Empleado eliminado correctamente\n\nSe ha guardado un registro de la eliminación para cumplimiento legal.');
+                        document.getElementById('resultadoAdmin').style.display = 'none';
+                        document.getElementById('dniAdmin').value = '';
+                        empleadoAdminActual = null;
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                });
+        }
+
+        // ============================================
+        // ADMINISTRACIÓN DE EMPRESAS
+        // ============================================
+        
+        function cargarListaEmpresas() {
+            const listaDiv = document.getElementById('listaEmpresas');
+            const tbody = document.getElementById('tbodyEmpresas');
+            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Cargando...</td></tr>';
+            listaDiv.style.display = 'block';
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'listar_empresas'}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.empresas) {
+                        tbody.innerHTML = '';
+                        
+                        data.empresas.forEach(empresa => {
+                            const tr = document.createElement('tr');
+                            tr.style.borderBottom = '1px solid var(--border)';
+                            
+                            const estadoActual = empresa.estado || 'Si';
+                            const estadoTexto = estadoActual === 'Si' ? '✅ ACTIVA' : '🔒 DESHABILITADA';
+                            const estadoColor = estadoActual === 'Si' ? '#4CAF50' : '#DC3545';
+                            
+                            tr.innerHTML = `
+                                <td style="padding: 15px;">${empresa.nombre}</td>
+                                <td style="padding: 15px; text-align: center; color: ${estadoColor}; font-weight: 600;">${estadoTexto}</td>
+                                <td style="padding: 15px; text-align: center;">
+                                    ${estadoActual === 'Si' ? 
+                                        `<button onclick="deshabilitarEmpresa('${empresa.nombre}')" class="btn" style="padding: 8px 16px; background: #DC3545;">🔒 Deshabilitar</button>` :
+                                        `<button onclick="habilitarEmpresa('${empresa.nombre}')" class="btn" style="padding: 8px 16px; background: #4CAF50;">✅ Habilitar</button>`
+                                    }
+                                </td>
+                            `;
+                            
+                            tbody.appendChild(tr);
+                        });
+                        
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No se encontraron empresas</td></tr>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Error al cargar empresas</td></tr>';
+                });
+        }
+
+        function deshabilitarEmpresa(nombreEmpresa) {
+            const motivo = prompt(`Motivo para DESHABILITAR la empresa "${nombreEmpresa}":\n(Ejemplo: Falta de pago, Contrato finalizado, etc.)`);
+            
+            if (!motivo) {
+                alert('Debes indicar un motivo');
+                return;
+            }
+            
+            if (!confirm(`⚠️ ¿Confirmas que deseas DESHABILITAR la empresa "${nombreEmpresa}"?\n\nTODOS los empleados de esta empresa perderán acceso a sus fichas médicas.`)) {
+                return;
+            }
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'cambiar_estado_empresa', empresa: nombreEmpresa, nuevoEstado: 'No', motivo: motivo}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Empresa deshabilitada correctamente\n\nEl cambio ha sido registrado.');
+                        cargarListaEmpresas();
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                });
+        }
+
+        function habilitarEmpresa(nombreEmpresa) {
+            const motivo = prompt(`Motivo para HABILITAR la empresa "${nombreEmpresa}":\n(Ejemplo: Pago recibido, Renovación de contrato, etc.)`);
+            
+            if (!motivo) {
+                alert('Debes indicar un motivo');
+                return;
+            }
+            
+            if (!confirm(`¿Confirmas que deseas HABILITAR la empresa "${nombreEmpresa}"?`)) {
+                return;
+            }
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'cambiar_estado_empresa', empresa: nombreEmpresa, nuevoEstado: 'Si', motivo: motivo}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Empresa habilitada correctamente\n\nEl cambio ha sido registrado.');
+                        cargarListaEmpresas();
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                });
+        }
+		
+		// ============================================
+        // EXPORTACIÓN MASIVA POR EMPRESA
+        // ============================================
+        
+        function generarExportacionMasiva(e) {
+            e.preventDefault();
+            
+            const empresa = document.getElementById('empresaExportacion').value;
+            const includeDatos = document.getElementById('chkDatosPersonales').checked;
+            const includeAccesos = document.getElementById('chkAccesos').checked;
+            const includeModificaciones = document.getElementById('chkModificaciones').checked;
+            const includeEliminaciones = document.getElementById('chkEliminaciones').checked;
+			const includeConsentimientos = document.getElementById('chkConsentimientos').checked;
+            
+            if (!empresa) {
+                alert('Debes seleccionar una empresa');
+                return;
+            }
+            
+            if (!includeDatos && !includeAccesos && !includeModificaciones && !includeEliminaciones && !includeConsentimientos) {
+                alert('Debes seleccionar al menos un reporte');
+                return;
+            }
+            
+            const btn = document.getElementById('btnExportarMasivo');
+            const progreso = document.getElementById('progresoExportacion');
+            const estado = document.getElementById('estadoExportacion');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Procesando...';
+            progreso.style.display = 'block';
+            estado.textContent = 'Iniciando exportación...';
+            
+            const reportes = {
+                datos: includeDatos,
+                accesos: includeAccesos,
+                modificaciones: includeModificaciones,
+                eliminaciones: includeEliminaciones,
+                consentimientos: includeConsentimientos
+            };
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'exportacion_masiva_empresa', empresa: empresa, reportes: JSON.stringify(reportes)}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        estado.textContent = `✅ Exportación completada: ${data.totalEmpleados} empleados, ${data.archivosGenerados} archivos`;
+                        
+                        setTimeout(() => {
+                            if (data.url) {
+                                window.open(data.url, '_blank');
+                            }
+                            
+                            btn.disabled = false;
+                            btn.textContent = '📦 Generar Exportación Completa';
+                            
+                            setTimeout(() => {
+                                progreso.style.display = 'none';
+                            }, 3000);
+                        }, 1000);
+                        
+                    } else {
+                        alert('❌ Error: ' + (data.error || 'Error desconocido'));
+                        btn.disabled = false;
+                        btn.textContent = '📦 Generar Exportación Completa';
+                        progreso.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error de conexión');
+                    btn.disabled = false;
+                    btn.textContent = '📦 Generar Exportación Completa';
+                    progreso.style.display = 'none';
+                });
+        }
+        
+        function cargarEmpresasExportacion() {
+            const select = document.getElementById('empresaExportacion');
+            
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'listar_empresas'}))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.empresas) {
+                        select.innerHTML = '<option value="">Selecciona una empresa</option>';
+                        data.empresas.forEach(empresa => {
+                            const option = document.createElement('option');
+                            option.value = empresa.nombre;
+                            option.textContent = empresa.nombre;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Error cargando empresas:', err);
+                    select.innerHTML = '<option value="">Error al cargar empresas</option>';
+                });
+        }
+        
+        // Inicializar
+        cargarEmpresasExportacion();
+		
+		// ============================================
+// VISUALIZAR REGISTRO DE ELIMINACIONES
+// ============================================
+
+function cargarRegistroEliminaciones() {
+    const tablaDiv = document.getElementById('tablaEliminaciones');
+    const tbody = document.getElementById('tbodyEliminaciones');
+    const totalSpan = document.getElementById('totalEliminaciones');
+    const fechaSpan = document.getElementById('fechaEliminaciones');
+    
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">⏳ Cargando eliminaciones...</td></tr>';
+    tablaDiv.style.display = 'block';
+    
+    fetchConAuth(buildMonitorURL({api: 'monitor', action: 'obtener_registro_eliminaciones'}))
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.eliminaciones && data.eliminaciones.length > 0) {
+                tbody.innerHTML = '';
+                totalSpan.textContent = data.eliminaciones.length;
+                fechaSpan.textContent = new Date().toLocaleString('es-AR');
+                
+                // Ordenar por fecha más reciente primero
+                data.eliminaciones.sort((a, b) => {
+                    const dateA = new Date(a.fecha);
+                    const dateB = new Date(b.fecha);
+                    return dateB - dateA;
+                });
+                
+                data.eliminaciones.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border)';
+                    
+                    // Formatear fecha
+                    let fechaFormateada = '-';
+                    try {
+                        if (item.fecha) {
+                            let fecha = new Date(item.fecha);
+                            
+                            if (isNaN(fecha)) {
+                                const partes = item.fecha.split(' ');
+                                if (partes.length === 2) {
+                                    const [dia, hora] = partes;
+                                    const [d, m, y] = dia.split('/');
+                                    fecha = new Date(`${y}-${m}-${d}T${hora}`);
+                                }
+                            }
+                            
+                            if (!isNaN(fecha)) {
+                                fechaFormateada = fecha.toLocaleString('es-AR', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            } else {
+                                fechaFormateada = item.fecha;
+                            }
+                        }
+                    } catch (e) {
+                        fechaFormateada = item.fecha || '-';
+                    }
+                    
+                    const metodoColor = item.metodo === 'Blanqueo Manual' ? '#FFB300' : '#2196F3';
+                    const metodoIcon = item.metodo === 'Blanqueo Manual' ? '🔧' : '🗑️';
+                    
+                    tr.innerHTML = `
+                        <td style="padding: 15px; font-size: 13px;">${fechaFormateada}</td>
+                        <td style="padding: 15px; font-family: monospace; font-weight: 600;">${item.dni || '-'}</td>
+                        <td style="padding: 15px;">${item.nombre || '-'}</td>
+                        <td style="padding: 15px; color: var(--primary);">${item.empresa || 'N/A'}</td>
+                        <td style="padding: 15px; font-size: 12px; color: var(--text-secondary); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.motivo || '-'}">${item.motivo || '-'}</td>
+                        <td style="padding: 15px; font-size: 12px;">${item.eliminadoPor || '-'}</td>
+                        <td style="padding: 15px; text-align: center;">
+                            <span style="background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 6px; font-size: 11px; color: ${metodoColor}; border: 1px solid ${metodoColor};">
+                                ${metodoIcon} ${item.metodo || 'Manual'}
+                            </span>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+                
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">ℹ️ No se encontraron registros de eliminaciones</td></tr>';
+                totalSpan.textContent = '0';
+                fechaSpan.textContent = new Date().toLocaleString('es-AR');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">❌ Error al cargar eliminaciones</td></tr>';
+        });
+}
+    </script>
+</body>
+</html>
