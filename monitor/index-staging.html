@@ -1108,7 +1108,7 @@
             document.getElementById('btnDatosCompletos').disabled = true;
             document.getElementById('btnAccesosLegal').disabled = true;
             
-            fetch(`${API_URL}?api=monitor&action=buscar_empleado&dni=${dni}`)
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'buscar_empleado', dni: dni}))
                 .then(r => r.json())
                 .then(data => {
                     if (data.success && data.empleado) {
@@ -1365,7 +1365,7 @@
             
             document.getElementById('nombreEmpleadoAdmin').textContent = 'Buscando...';
             
-            fetch(`${API_URL}?api=monitor&action=buscar_empleado&dni=${dni}`)
+            fetchConAuth(buildMonitorURL({api: 'monitor', action: 'buscar_empleado', dni: dni}))
                 .then(r => r.json())
                 .then(data => {
                     if (data.success && data.empleado) {
