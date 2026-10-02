@@ -641,7 +641,7 @@
         }
 
         (function verifyAuth() {
-            const token = localStorage.getItem('qrlife_monitor_token');
+            const token = localStorage.getItem('qrlife_monitor_sessionId');
             const user = localStorage.getItem('qrlife_monitor_usuario');
             if (!token || !user) { window.location.href = 'login-staging.html'; return; }
             document.getElementById('usuarioActual').textContent = `👤 ${user}`;
